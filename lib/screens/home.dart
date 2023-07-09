@@ -29,17 +29,19 @@ class _MyHomeState extends State<MyHome> {
     textFields = [
       {
         'controller': _title,
+        'controllerName': 'title',
         'hintText': 'Title',
       },
       {
         'controller': _description,
+        'controllerName': 'description',
         'hintText': 'Description',
       },
     ];
   }
 
   // checkbox was tapped
-  void checkBoxChanged(bool? value, int index) {
+  void checkBoxChanged(bool? value, id) {
     setState(() {
       // db.toDoList[index][1] = !db.toDoList[index][1];
     });
@@ -52,10 +54,12 @@ class _MyHomeState extends State<MyHome> {
   // save new task
   void saveNewTask() {
     try {
-      if (_title.text != null || _description.text != null) {
-        FirebaseFirestore.instance
-            .collection("todo")
-            .add({'title': _title.text, 'description': _description.text});
+      if (_title.text.isNotEmpty || _description.text.isNotEmpty) {
+        FirebaseFirestore.instance.collection("todo").add({
+          'title': _title.text,
+          'description': _description.text,
+          'isCompleted': false
+        });
         setState(() {
           _title.clear();
           _description.clear();
@@ -85,12 +89,50 @@ class _MyHomeState extends State<MyHome> {
     );
   }
 
-  // delete task
-  void deleteTask(int index) {
-    // setState(() {
-    //   db.toDoList.removeAt(index);
+  // update task
+  void updateTask(String? id) {
+    print('id $id');
+    // FirebaseFirestore.instance.collection("todo").doc(id).update({
+    //   'title': _title.text,
+    //   'description': _description.text,
+    //   // 'isCompleted': false
     // });
-    // db.updateDataBase();
+    // Navigator.of(context).pop();
+  }
+
+  void showDialogBox(bool isUpdate, String? id, Map<String, dynamic> data) {
+    if (isUpdate) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return Container(
+            child: Column(
+              children: [
+                DialogBox(
+                  textFields: textFields,
+                  onSave: () {
+                    updateTask(id);
+                  },
+                  initialData: data,
+                  onCancel: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
+  }
+
+  // delete task
+  void deleteTask(id) {
+    FirebaseFirestore.instance
+        .collection("todo")
+        .doc(id)
+        .delete()
+        .then((value) {
+      // Navigator.of(context).pop();
+    });
   }
 
   @override
@@ -116,13 +158,23 @@ class _MyHomeState extends State<MyHome> {
           return ListView.builder(
             itemCount: snapshot.data?.docs.length,
             itemBuilder: (context, index) {
-              Map<String, dynamic> listTodo =
+              Map<String, dynamic> todo =
                   snapshot.data?.docs[index].data() as Map<String, dynamic>;
+              String? id = snapshot.data?.docs[index].id;
+              bool isCompleted = false;
+              dynamic isCompletedValue = todo['isCompleted'];
+              if (isCompletedValue is bool) {
+                isCompleted = isCompletedValue;
+              } else if (isCompletedValue is String) {
+                isCompleted = isCompletedValue.toLowerCase() == 'true';
+              }
               return ToDoTile(
-                taskName: listTodo['title'] ?? "Error",
-                taskCompleted: true,
-                onChanged: (value) => checkBoxChanged(value, index),
-                deleteFunction: (context) => deleteTask(index),
+                textFields: textFields,
+                taskName: todo['title'] ?? "Error",
+                taskCompleted: isCompleted,
+                onChanged: (value) => checkBoxChanged(value, id),
+                deleteFunction: (context) => deleteTask(id),
+                onUpdated: (value) => showDialogBox(value, id, todo),
               );
             },
           );
