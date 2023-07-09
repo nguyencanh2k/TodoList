@@ -11,6 +11,9 @@ void main() async {
   await Hive.initFlutter();
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // open a box
+  var box = await Hive.openBox('mybox');
   runApp(const MyApp());
 }
 
@@ -22,7 +25,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
