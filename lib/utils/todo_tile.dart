@@ -5,20 +5,24 @@ import 'package:todo_list/utils/dialog_box.dart';
 class ToDoTile extends StatelessWidget {
   final String taskName;
   final bool taskCompleted;
-  Function(bool?)? onChanged;
+  Function(bool) onChangedStatus;
   Function(bool) onUpdated;
   Function(BuildContext)? deleteFunction;
-  final List<Map<String, dynamic>> textFields;
 
   ToDoTile({
     super.key,
     required this.taskName,
     required this.taskCompleted,
-    required this.onChanged,
+    required this.onChangedStatus,
     required this.onUpdated,
     required this.deleteFunction,
-    required this.textFields,
   });
+
+  void handleCheckboxChanged(bool? isChecked) {
+    if (isChecked != null) {
+      onChangedStatus(isChecked);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +35,7 @@ class ToDoTile extends StatelessWidget {
             SlidableAction(
               onPressed: deleteFunction,
               icon: Icons.delete,
-              backgroundColor: Colors.red.shade300,
+              backgroundColor: const Color.fromARGB(255, 255, 255, 255),
               borderRadius: BorderRadius.circular(12),
             )
           ],
@@ -39,7 +43,7 @@ class ToDoTile extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.yellow,
+            color: const Color.fromARGB(255, 202, 202, 200),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -47,7 +51,7 @@ class ToDoTile extends StatelessWidget {
               // checkbox
               Checkbox(
                 value: taskCompleted,
-                onChanged: onChanged,
+                onChanged: handleCheckboxChanged,
                 activeColor: Colors.black,
               ),
 
@@ -55,7 +59,7 @@ class ToDoTile extends StatelessWidget {
               GestureDetector(
                 onTap: () {
                   if (onUpdated != null) {
-                    onUpdated!(true);
+                    onUpdated(true);
                   }
                 },
                 child: Text(

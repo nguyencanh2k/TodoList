@@ -25,27 +25,6 @@ class _MyHomeState extends State<MyHome> {
   @override
   void initState() {
     super.initState();
-
-    textFields = [
-      {
-        'controller': _title,
-        'controllerName': 'title',
-        'hintText': 'Title',
-      },
-      {
-        'controller': _description,
-        'controllerName': 'description',
-        'hintText': 'Description',
-      },
-    ];
-  }
-
-  // checkbox was tapped
-  void checkBoxChanged(bool? value, id) {
-    setState(() {
-      // db.toDoList[index][1] = !db.toDoList[index][1];
-    });
-    // db.updateDataBase();
   }
 
   //get list todo
@@ -80,7 +59,8 @@ class _MyHomeState extends State<MyHome> {
         return Container(
             child: Column(children: [
           DialogBox(
-            textFields: textFields,
+            titleController: _title,
+            descriptionController: _description,
             onSave: saveNewTask,
             onCancel: () => Navigator.of(context).pop(),
           ),
@@ -91,16 +71,26 @@ class _MyHomeState extends State<MyHome> {
 
   // update task
   void updateTask(String? id) {
-    print('id $id');
-    // FirebaseFirestore.instance.collection("todo").doc(id).update({
-    //   'title': _title.text,
-    //   'description': _description.text,
-    //   // 'isCompleted': false
-    // });
-    // Navigator.of(context).pop();
+    try {
+      if (_title.text.isNotEmpty || _description.text.isNotEmpty) {
+        FirebaseFirestore.instance
+            .collection("todo")
+            .doc(id)
+            .update({'title': _title.text, 'description': _description.text});
+        setState(() {
+          _title.clear();
+          _description.clear();
+        });
+        Navigator.of(context).pop();
+        print('update in successfully');
+      }
+    } catch (e) {
+      print('Firebase error $e');
+    }
   }
 
-  void showDialogBox(bool isUpdate, String? id, Map<String, dynamic> data) {
+  void showDialogBoxUpdate(
+      bool isUpdate, String? id, Map<String, dynamic> todo) {
     if (isUpdate) {
       showDialog(
         context: context,
@@ -109,11 +99,12 @@ class _MyHomeState extends State<MyHome> {
             child: Column(
               children: [
                 DialogBox(
-                  textFields: textFields,
+                  titleController: _title,
+                  descriptionController: _description,
+                  todo: todo,
                   onSave: () {
                     updateTask(id);
                   },
-                  initialData: data,
                   onCancel: () => Navigator.of(context).pop(),
                 ),
               ],
@@ -122,6 +113,14 @@ class _MyHomeState extends State<MyHome> {
         },
       );
     }
+  }
+
+  // checkbox was tapped
+  void checkBoxChanged(bool status, id) {
+    FirebaseFirestore.instance
+        .collection("todo")
+        .doc(id)
+        .update({'isCompleted': status});
   }
 
   // delete task
@@ -138,9 +137,9 @@ class _MyHomeState extends State<MyHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.yellow[200],
+      backgroundColor: Color.fromARGB(255, 255, 255, 255),
       appBar: AppBar(
-        title: Text('TO DO'),
+        title: Text('TODO APP'),
         elevation: 0,
       ),
       floatingActionButton: FloatingActionButton(
@@ -169,12 +168,11 @@ class _MyHomeState extends State<MyHome> {
                 isCompleted = isCompletedValue.toLowerCase() == 'true';
               }
               return ToDoTile(
-                textFields: textFields,
                 taskName: todo['title'] ?? "Error",
                 taskCompleted: isCompleted,
-                onChanged: (value) => checkBoxChanged(value, id),
+                onChangedStatus: (status) => checkBoxChanged(status, id),
                 deleteFunction: (context) => deleteTask(id),
-                onUpdated: (value) => showDialogBox(value, id, todo),
+                onUpdated: (value) => showDialogBoxUpdate(value, id, todo),
               );
             },
           );

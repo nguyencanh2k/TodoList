@@ -2,30 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:todo_list/utils/button.dart';
 
 class DialogBox extends StatelessWidget {
-  final List<Map<String, dynamic>> textFields;
-  final Map<String, dynamic>? initialData;
   final VoidCallback onSave;
   final VoidCallback onCancel;
+  // text controller
+  final TextEditingController titleController;
+  final TextEditingController descriptionController;
+  Map<String, dynamic>? todo;
 
   DialogBox({
     Key? key,
-    required this.textFields,
-    this.initialData = const {},
+    required this.titleController,
+    required this.descriptionController,
     required this.onSave,
     required this.onCancel,
-  }) : super(key: key);
+    this.todo,
+  }) : super(key: key) {
+    titleController.text = todo?['title'] ?? '';
+    descriptionController.text = todo?['description'] ?? '';
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Sử dụng tham số initialData để khởi tạo giá trị cho các trường dữ liệu
-    final controllers = textFields.map((field) {
-      final controller = field['controller'] as TextEditingController;
-      final controllerName = field['controllerName'] as String;
-      final initialValue = initialData?[controllerName];
-      return TextEditingController(text: initialValue?.toString() ?? '');
-    }).toList();
-    print('controllers $controllers');
-    print('initialData $initialData');
     return AlertDialog(
       backgroundColor: Colors.white,
       content: SingleChildScrollView(
@@ -35,25 +32,19 @@ class DialogBox extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListView.builder(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                itemCount: textFields.length,
-                itemBuilder: (context, index) {
-                  final controller = controllers[index];
-                  final hintText = textFields[index]['hintText'] as String;
-
-                  return Container(
-                    margin: EdgeInsets.only(bottom: 8.0),
-                    child: TextField(
-                      controller: controller,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: hintText,
-                      ),
-                    ),
-                  );
-                },
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  hintText: "Title",
+                ),
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                  hintText: "Description",
+                ),
               ),
 
               // buttons -> save + cancel
